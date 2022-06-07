@@ -1,0 +1,31 @@
+{
+  "name": "live-chart-ui",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^6.1.0",
+    "ant-design-vue": "^2.2.8",
+    "axios": "^0.27.2",
+    "mitt": "^3.0.0",
+    "pinia": "^2.0.14",
+    "pinia-plugin-persist": "^1.0.0",
+    "util": "^0.12.4",
+    "vue": "^3.2.25",
+    "vue-router": "^4.0.15"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^2.3.3",
+    "less": "^4.1.2",
+    "less-loader": "^6.0.0",
+    "sass": "^1.49.11",
+    "typescript": "^4.5.4",
+    "unplugin-vue-components": "^0.19.6",
+    "vite": "^2.9.9",
+    "vue-tsc": "^0.34.7"
+  }
+}
