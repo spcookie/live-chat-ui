@@ -24,21 +24,21 @@ export default {
 </script>
 
 <template>
-    <a-comment :class="isReversal">
-      <template #author>{{ item.from.name }}</template>
-      <template #avatar >
-        <a-avatar src="https://joeschmoe.io/api/v1/random" alt="头像"/>
-      </template>
-      <template #content>
-        <img :src="item.imageBase64" alt="" v-if="item.type === 'IMAGE'">
-        <p v-else-if="item.type === 'TEXT'">
-          {{ item.text }}
-        </p>
-      </template>
-      <template #datetime>
-        <span>{{ item.date }}</span>
-      </template>
-    </a-comment>
+  <a-comment :class="isReversal">
+    <template #author>{{ item.from.name }}</template>
+    <template #avatar>
+      <a-avatar src="https://joeschmoe.io/api/v1/random" alt="头像"/>
+    </template>
+    <template #content>
+      <img class="bubble-img" :src="item.imageBase64" alt="" v-if="item.type === 'IMAGE'">
+      <p class="bubble-text" v-else-if="item.type === 'TEXT'">
+        {{ item.text }}
+      </p>
+    </template>
+    <template #datetime>
+      <span>{{ item.date }}</span>
+    </template>
+  </a-comment>
 </template>
 
 <style scoped lang="scss">
@@ -65,4 +65,12 @@ export default {
   }
 }
 
+.bubble-img {
+  width: 200px;
+  height: 200px;
+}
+
+.bubble-text {
+  font-size: x-large;
+}
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref, watch, nextTick, onUnmounted} from "vue";
-import {UserOutlined} from "@ant-design/icons-vue";
+import {UserOutlined, PictureOutlined, CloseOutlined, DeleteOutlined} from "@ant-design/icons-vue";
 import MessageApi, {ChatMessage} from "../apis/MessageApi";
 import {useRoute} from "vue-router";
 import Bubble from "../components/Bubble.vue";
@@ -74,8 +74,8 @@ watch(
     (message: any) => {
       // 收到消息后，判断消息的发送方是否是当前打开的好友窗口
       if (message.from.id == props.id) {
-        // 判断是否是文本消息
-        if (message.type === 'TEXT') {
+        // 判断是否是文本或图片消息
+        if (message.type === 'TEXT' || message.type === 'IMAGE') {
           chatMsg.value.push(message)
           // 消息窗口滚动到底部
           scroll()
@@ -84,21 +84,35 @@ watch(
     })
 // 判断是否有图片
 const isHaveImage = ref(false)
+// 打开文件窗口
+const images = ref<HTMLElement>()
+const triggerOpenImage = () => {
+  if (images.value != undefined) {
+    images.value.dispatchEvent(new MouseEvent('click'))
+  }
+}
 // 解析图片
 const imageView = ref()
 const sendImage = function (e: Event) {
+  console.log(e)
   const element = e.target as any
   if (element ?? false) {
-    console.log(element.files)
-    const {0: image} = element.files as FileList
-    const reader = new FileReader()
-    reader.readAsDataURL(image)
-    reader.onloadend = () => {
-      let base64 = reader.result
-      imageView.value = base64 as string
-      isHaveImage.value = true
+    const image = element.files[0]
+    if (image != null) {
+      const reader = new FileReader()
+      reader.readAsDataURL(image)
+      reader.onloadend = () => {
+        let base64 = reader.result
+        imageView.value = base64 as string
+        isHaveImage.value = true
+      }
     }
   }
+}
+// 删除图片
+const deleteImage = () => {
+  imageView.value = ''
+  isHaveImage.value = false
 }
 // 发送消息
 const sendMagVal = ref('')
@@ -118,28 +132,34 @@ const sendMessage = () => {
     })
   }
   // 图片消息发送
-  let imageMessage
+  let imagePromise
   if (isHaveImage.value) {
-    imageMessage = MessageApi.sendImgMessage({
+    imagePromise = MessageApi.sendImgMessage({
       target: {
         id: props.id,
       },
       imageBase64: imageView.value
     })
-    imageMessage.then(() => {
+    imagePromise.then(() => {
       isHaveImage.value = false
       imageView.value = undefined
     })
   }
   // 所有信息发送完毕后
-  if ((sendMagVal.value ?? false) && isHaveImage.value) {
-    Promise.all([textPromise, imageMessage]).then(() => {
-      // 发送完毕后重新更新消息
-      loadMag(props.id)
-      //滚动到底部
-      scroll()
-    })
+  let allPromise = []
+  if (textPromise != undefined) {
+    allPromise.push(textPromise)
   }
+  if (imagePromise != undefined) {
+    allPromise.push(imagePromise)
+  }
+  Promise.all(allPromise).then(() => {
+    console.log('开始刷新')
+    // 发送完毕后重新更新消息
+    loadMag(props.id)
+    //滚动到底部
+    scroll()
+  })
 }
 </script>
 
@@ -168,7 +188,22 @@ export default {
         </template>
       </div>
       <div class="chat-tools">
-        <input type="file" @change="sendImage" ref="images" accept="image/*"/>
+        <input style="width: 0.1px;height: 0.1px" type="file" @change="sendImage" ref="images" accept="image/*"/>
+        <a-button class="chat-tools-button" @click="triggerOpenImage" type="text">
+          <template #icon>
+            <picture-outlined />
+          </template>
+        </a-button>
+        <a-button @click="deleteImage" class="chat-tools-button" type="text">
+          <template #icon>
+            <delete-outlined />
+          </template>
+        </a-button>
+        <a-button class="chat-tools-button" danger type="text">
+          <template #icon>
+            <close-outlined />
+          </template>
+        </a-button>
       </div>
       <div class="chat-bottom">
         <a-textarea
@@ -196,14 +231,19 @@ export default {
   height: 90%;
 
   .chat-message {
-    height: 76%;
+    height: 74%;
     overflow: auto;
     scroll-margin-top: 0;
   }
 
   .chat-tools {
-    height: 4%;
-    background-color: #c73838;
+    height: 6%;
+
+    .chat-tools-button {
+      height: 100%;
+      width: 5%;
+      margin-left: 10px;
+    }
   }
 
   .chat-bottom {

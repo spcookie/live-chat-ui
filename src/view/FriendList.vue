@@ -49,7 +49,7 @@ const chat = async (index: number, id: number, name: string) => {
 // 接收到消息时计算未读消息数
 const callback = (ev: WebSocketEventMap['message']) => {
   const _message = JSON.parse(ev.data)
-  if (_message.type === 'TEXT') {
+  if (_message.type === 'TEXT' || _message.type === 'IMAGE') {
     // 当前打开的好友窗口
     const {id} = route.params
     const fromId = _message.from.id
