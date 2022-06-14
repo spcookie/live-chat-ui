@@ -4,6 +4,7 @@ import router from "./router";
 import store from "./store";
 import 'ant-design-vue/dist/antd.css';
 import 'ant-design-vue/es/message/style/css';
+import 'animate.css';
 
 const app = createApp(App)
 // 添加路由

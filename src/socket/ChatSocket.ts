@@ -1,4 +1,4 @@
-import {ChatMessage, MessageType} from "../apis/MessageApi";
+import {ChatMessage} from "../apis/MessageApi";
 import {Ref, UnwrapRef} from "@vue/reactivity";
 import TokenUtil from "../utils/TokenUtil";
 import {message as _message} from "ant-design-vue";

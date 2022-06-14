@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {UserOutlined, PoweroffOutlined, SearchOutlined, FolderOutlined, MailOutlined} from "@ant-design/icons-vue";
+import {UserOutlined, PoweroffOutlined, UsergroupAddOutlined, MailOutlined} from "@ant-design/icons-vue";
 import {ref, shallowRef, watch, watchEffect} from "vue";
 import FriendList from "./FriendList.vue";
 import UserApi from "../apis/UserApi";
@@ -33,14 +33,10 @@ watchEffect(
           break
         case 3: {
           subMenu.value = SearchFriend
-          subMenuName.value = '查询用户'
+          subMenuName.value = '添加好友'
         }
           break
         case 4: {
-          subMenuName.value = '发送文件'
-        }
-          break
-        case 5: {
           UserApi.logout().then(resp => {
             const data = resp.data
             if (data.code === 200) {
@@ -97,15 +93,10 @@ export default {
             </a-menu-item>
             <a-menu-item :key="3">
               <template #icon>
-                <search-outlined/>
+                <usergroup-add-outlined />
               </template>
             </a-menu-item>
             <a-menu-item :key="4">
-              <template #icon>
-                <folder-outlined/>
-              </template>
-            </a-menu-item>
-            <a-menu-item :key="5">
               <template #icon>
                 <poweroff-outlined/>
               </template>

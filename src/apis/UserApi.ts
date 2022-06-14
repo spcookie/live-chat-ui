@@ -6,11 +6,11 @@ export default class UserApi {
        return BaseService.post("/auth/login", data)
     }
 
-    static loadUser() {
-        return BaseService.get("/account/load")
-    }
-
     static logout() {
         return BaseService.get('/logout')
+    }
+
+    static register(account: any) {
+        return BaseService.post('/account/register', account)
     }
 }

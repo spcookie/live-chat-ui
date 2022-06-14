@@ -13,7 +13,10 @@ export type ChatMessage  = {
     },
     date: string,
     text?: string,
-    imageBase64?: string
+    imageBase64?: string,
+    originalFileName?: string,
+    path?: string,
+    size?: number
 }
 
 export type TextMessage = {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 
-import {onUnmounted, ref} from "vue";
+import {onUnmounted} from "vue";
 import FriendApi, {Friend} from "../apis/FriendApi";
 import {useRoute, useRouter} from "vue-router";
 import {registerSocketEvents, removeSocketEvent} from "../socket/ChatSocket";
-import {message} from "ant-design-vue";
 import {useMessageStore} from "../store/MessageStore";
 import {storeToRefs} from "pinia";
+import {ManOutlined, WomanOutlined} from "@ant-design/icons-vue";
 
 const router = useRouter()
 const route = useRoute()
@@ -49,7 +49,7 @@ const chat = async (index: number, id: number, name: string) => {
 // 接收到消息时计算未读消息数
 const callback = (ev: WebSocketEventMap['message']) => {
   const _message = JSON.parse(ev.data)
-  if (_message.type === 'TEXT' || _message.type === 'IMAGE') {
+  if (_message.type === 'TEXT' || _message.type === 'IMAGE' || _message.type === 'FILE') {
     // 当前打开的好友窗口
     const {id} = route.params
     const fromId = _message.from.id
@@ -87,7 +87,12 @@ export default {
         <a-list-item-meta>
           <template #description>
             <div class="friend-description">
-              <a-tag color="success">在线</a-tag>
+              <a-tag v-if="item.sex === '男'" color="success">
+                <man-outlined />
+              </a-tag>
+              <a-tag v-else color="error">
+                <woman-outlined />
+              </a-tag>
               <a-badge
                   :count=item.unread.toString()
                   :number-style="{

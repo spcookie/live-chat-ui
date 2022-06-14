@@ -30,7 +30,7 @@ BaseService.interceptors.response.use(response => {
     return response
 }, error => {
     message.error('服务器出了一点小问题', 1)
-    return Promise.resolve()
+    return Promise.reject()
 })
 
 export default BaseService

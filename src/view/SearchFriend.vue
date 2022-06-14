@@ -51,7 +51,7 @@ export default {
     <template #header>
       <a-input-search
           v-model:value="accountId"
-          placeholder="请输入好友账号"
+          placeholder="请输入用户账号"
           enter-button
           @search="search"
       />
