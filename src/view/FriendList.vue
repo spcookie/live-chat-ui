@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onUnmounted} from "vue";
+import {onUnmounted, ref} from "vue";
 import FriendApi, {Friend} from "../apis/FriendApi";
 import {useRoute, useRouter} from "vue-router";
 import {registerSocketEvents, removeSocketEvent} from "../socket/ChatSocket";
@@ -16,7 +16,9 @@ const messageStore = useMessageStore()
 // 加载好友
 const {friends} = storeToRefs(messageStore)
 let friendList: Friend[]
+const initLoading = ref(false)
 const loadAllFriends = () => {
+  initLoading.value = true
   FriendApi.loadFriends().then(resp => {
     friendList = resp.data.data
     friendList.forEach(value => {
@@ -36,6 +38,8 @@ const loadAllFriends = () => {
       })
       friends.value = friendList
     })
+  }).finally(() => {
+    initLoading.value = false
   })
 }
 loadAllFriends()
@@ -83,37 +87,39 @@ export default {
       item-layout="horizontal"
       :data-source="friends">
     <template #renderItem="{ item, index }">
-      <a-list-item @click="chat(index, item.id, item.name)">
-        <a-list-item-meta>
-          <template #description>
-            <div class="friend-description">
-              <a-tag v-if="item.sex === '男'" color="success">
-                <man-outlined />
-              </a-tag>
-              <a-tag v-else color="error">
-                <woman-outlined />
-              </a-tag>
-              <a-badge
-                  :count=item.unread.toString()
-                  :number-style="{
+      <a-list-item @click="chat(index, item.id, item.name)" class="friend-item">
+        <a-skeleton avatar :title="false" :loading="initLoading" active>
+          <a-list-item-meta>
+            <template #description>
+              <div class="friend-description">
+                <a-tag v-if="item.sex === '男'" color="success">
+                  <man-outlined />
+                </a-tag>
+                <a-tag v-else color="error">
+                  <woman-outlined />
+                </a-tag>
+                <a-badge
+                    :count=item.unread.toString()
+                    :number-style="{
                   'min-width': '16px',
                   'height': '16px',
                   'margin-right': '16px',
                   'border-radius': '8px',
                   'line-height': '16px'
                 }"
-              />
-            </div>
-          </template>
-          <template #title>
-            <span>{{ item.name }}</span>
-          </template>
-          <template #avatar>
-            <a-badge status="success">
-              <a-avatar src="https://joeschmoe.io/api/v1/random"/>
-            </a-badge>
-          </template>
-        </a-list-item-meta>
+                />
+              </div>
+            </template>
+            <template #title>
+              <span>{{ item.name }}</span>
+            </template>
+            <template #avatar>
+              <a-badge status="success">
+                <a-avatar src="https://joeschmoe.io/api/v1/random"/>
+              </a-badge>
+            </template>
+          </a-list-item-meta>
+        </a-skeleton>
       </a-list-item>
     </template>
   </a-list>
@@ -124,5 +130,16 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.friend-item {
+  transition: all .25s;
+
+  &:hover {
+    background-color: #e6f7ff;
+  }
+}
+:deep(.ant-list-items) {
+  height: calc(100vh - 140.54px);
+  overflow: auto;
 }
 </style>

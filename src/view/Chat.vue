@@ -24,7 +24,9 @@ const {friends} = storeToRefs(messageStore)
 const chatBox = ref<HTMLElement>({} as HTMLElement)
 const scroll = () => {
   nextTick(() => {
-    chatBox.value.scrollTop = chatBox.value.scrollHeight - chatBox.value.offsetHeight
+    if (chatBox.value != null) {
+      chatBox.value.scrollTop = chatBox.value.scrollHeight - chatBox.value.offsetHeight
+    }
   })
 }
 // 加载消息
@@ -44,6 +46,8 @@ const loadMag = (id: string) => {
       message.warn('已读失败')
     }
   })
+  const loadSign = 'sign'
+  message.loading({content: '抓取消息中', key: loadSign, duration: 0})
   MessageApi.loadFriendMessageById(id, 0, 10).then(resp => {
     if (resp.data.code === 200) {
       //加载消息数据
@@ -51,6 +55,7 @@ const loadMag = (id: string) => {
       //滚动
       scroll()
     }
+    message.destroy()
   })
 }
 loadMag(props.id)
@@ -170,7 +175,7 @@ const file = ref<HTMLElement>()
 const isUpload = ref(false)
 const fileProgress = ref<number>(0)
 // ['active', 'exception']
-const fileStatus = ref('active')
+const fileStatus = ref<"normal" | "active" | "success" | "exception">('active')
 const triggerOpenFile = () => {
   if (file.value != undefined) {
     file.value.dispatchEvent(new MouseEvent('click'))
@@ -228,10 +233,11 @@ const historyMessageQuery = reactive({
   page: 0,
   size: 1
 })
+const queryLoading = ref(false)
 const q = (page: number, size: number) => {
-  console.log(page, size)
   if (Number.isInteger(page) && Number.isInteger(size)) {
     if (page >= 0 && size > 0) {
+      queryLoading.value = true
       MessageApi.loadFriendMessageById(props.id, page, size).then(resp => {
         if (resp.data.code === 200) {
           //加载消息数据
@@ -239,6 +245,8 @@ const q = (page: number, size: number) => {
         } else if (resp.data.code === 405) {
           message.warn(resp.data.data)
         }
+      }).finally(() => {
+        queryLoading.value = false
       })
     } else {
       message.warn('请输入合法的查询值')
@@ -272,10 +280,9 @@ export default {
 </script>
 
 <template>
-  <a-layout>
+  <a-layout style="min-width: 300px;">
     <a-layout-content class="chat-top">
       <a-breadcrumb>
-        <template #separator><span>></span></template>
         <a-breadcrumb-item>
           <user-outlined/>
           <span>好友</span>
@@ -290,17 +297,22 @@ export default {
         </template>
         <a-drawer
             title="历史消息"
-            width="600"
             placement="left"
             :closable="true"
             :visible="isOpenHistoryMessage"
             :get-container="false"
-            :style="{ position: 'absolute' }"
+            :style="{ position: 'absolute'}"
+            :contentWrapperStyle="{width:'50vw'}"
             @close="onCloseHistoryMessage"
         >
-          <a-empty v-if="historyMessage.length === 0" />
-          <template v-else v-for="item in historyMessage" :key="item.id">
-            <Bubble :item="item"></Bubble>
+          <div v-if="queryLoading" style="width: 100%;height: 100%;display: flex">
+            <a-spin tip="加载中..." style="margin: auto"></a-spin>
+          </div>
+          <template v-else>
+            <a-empty v-if="historyMessage.length === 0" />
+            <template v-else v-for="item in historyMessage" :key="item.id">
+              <Bubble :item="item"></Bubble>
+            </template>
           </template>
           <template #footer>
             <a-input-group size="large">
@@ -368,7 +380,7 @@ export default {
 
 <style scoped lang="scss">
 .chat-top {
-  height: 10%;
+  height: 6%;
 
   :deep(.ant-breadcrumb) {
     padding: 1% 3%;
@@ -376,10 +388,10 @@ export default {
 }
 
 .chat-window {
-  height: 90%;
+  height: 94%;
 
   .chat-message {
-    height: 74%;
+    height: 73%;
     overflow: auto;
     scroll-margin-top: 0;
   }
@@ -388,7 +400,7 @@ export default {
     position: relative;
     top: 0;
     left: 0;
-    height: 6%;
+    height: 7%;
 
     .chat-tools-button {
       height: 100%;

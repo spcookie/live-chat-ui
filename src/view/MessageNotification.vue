@@ -8,12 +8,16 @@ import {ChatMessage} from "../apis/MessageApi";
 
 // 加载好友请求通知消息
 const addFriendMessage = ref([])
+const initLoading = ref(false)
 const loadAddFriendMessage = () => {
+  initLoading.value = true
   FriendApi.loadAddFriend().then(resp => {
     const data = resp.data
     if (data.code === 200) {
       addFriendMessage.value = data.data
     }
+  }).finally(() => {
+    initLoading.value = false
   })
 }
 loadAddFriendMessage()
@@ -43,7 +47,6 @@ watch(
       }
     }
 )
-
 </script>
 
 <script lang="ts">
@@ -55,42 +58,44 @@ export default {
 <template>
   <a-list size="small" :data-source="addFriendMessage">
     <template #renderItem="{ item }">
-      <a-list-item>
-        <a-list-item-meta>
-          <template #title>
-            <template v-if="item.status === 'PENDING'">
-              <a-typography-text strong>{{ item.from.name }}</a-typography-text>
-              <a-typography-text type="secondary">请求加为好友</a-typography-text>
-            </template>
-            <template v-else>
-              <template v-if="item.status === 'ACCEPT'">
-                <a-typography-text type="secondary">已接受</a-typography-text>
-              </template>
-              <template v-if="item.status === 'REJECT'">
-                <a-typography-text type="secondary">已拒绝</a-typography-text>
-              </template>
-              <a-typography-text strong>{{ item.from.name }}</a-typography-text>
-              <a-typography-text type="secondary">的好友请求</a-typography-text>
-            </template>
-          </template>
-          <template #description>
-            <div class="message-processing-button">
+      <a-skeleton :title="false" :loading="initLoading" active>
+        <a-list-item>
+          <a-list-item-meta>
+            <template #title>
               <template v-if="item.status === 'PENDING'">
-                <a-button shape="round" size="small" style="margin-right: 10px" @click="acceptFriend(item.id, true)">
-                  <template #icon>
-                    <check-outlined />
-                  </template>
-                </a-button>
-                <a-button shape="round" size="small" @click="acceptFriend(item.id, false)">
-                  <template #icon>
-                    <close-outlined />
-                  </template>
-                </a-button>
+                <a-typography-text strong>{{ item.from.name }}</a-typography-text>
+                <a-typography-text type="secondary">请求加为好友</a-typography-text>
               </template>
-            </div>
-          </template>
-        </a-list-item-meta>
+              <template v-else>
+                <template v-if="item.status === 'ACCEPT'">
+                  <a-typography-text type="secondary">已接受</a-typography-text>
+                </template>
+                <template v-if="item.status === 'REJECT'">
+                  <a-typography-text type="secondary">已拒绝</a-typography-text>
+                </template>
+                <a-typography-text strong>{{ item.from.name }}</a-typography-text>
+                <a-typography-text type="secondary">的好友请求</a-typography-text>
+              </template>
+            </template>
+            <template #description>
+              <div class="message-processing-button">
+                <template v-if="item.status === 'PENDING'">
+                  <a-button shape="round" size="small" style="margin-right: 10px" @click="acceptFriend(item.id, true)">
+                    <template #icon>
+                      <check-outlined />
+                    </template>
+                  </a-button>
+                  <a-button shape="round" size="small" @click="acceptFriend(item.id, false)">
+                    <template #icon>
+                      <close-outlined />
+                    </template>
+                  </a-button>
+                </template>
+              </div>
+            </template>
+          </a-list-item-meta>
         </a-list-item>
+      </a-skeleton>
     </template>
   </a-list>
 </template>
@@ -99,5 +104,9 @@ export default {
 .message-processing-button {
   display: flex;
   justify-content: flex-end;
+}
+:deep(.ant-list-items) {
+  height: calc(100vh - 140.54px);
+  overflow: auto;
 }
 </style>

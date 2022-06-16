@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "dev": "vite --mode dev",
+    "build": "vite build --mode prod",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -12,6 +12,7 @@
     "animate.css": "^4.1.1",
     "ant-design-vue": "^3.2.7",
     "axios": "^0.27.2",
+    "dotenv": "^16.0.1",
     "mitt": "^3.0.0",
     "pinia": "^2.0.14",
     "pinia-plugin-persist": "^1.0.0",

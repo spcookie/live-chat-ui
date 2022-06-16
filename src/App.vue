@@ -17,4 +17,21 @@ input::-webkit-inner-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
 }
+
+/* 滚动槽 */
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: rgba(55, 55, 55, 0.3);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 4px;
+  background-color: #F5F5F5;
+}
 </style>

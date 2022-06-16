@@ -9,4 +9,10 @@ export default class FileApi {
             }
         })
     }
+
+    static downloadFile(id: number) {
+        return BaseService.get('/file/download/' + id, {
+            responseType: "blob",
+        })
+    }
 }

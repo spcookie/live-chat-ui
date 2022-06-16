@@ -6,6 +6,7 @@ export interface User {
     username: string,
     name: string,
     age: number,
+    sex: string,
     phone: string,
     auth: string[],
     token: string

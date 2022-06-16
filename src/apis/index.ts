@@ -2,7 +2,7 @@ import axios from "axios";
 import {message} from "ant-design-vue";
 
 const BaseService = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: import.meta.env.VITE_SERVICE_URL,
     headers: {
         'Content-Type': 'application/json;charset=utf-8',
     },

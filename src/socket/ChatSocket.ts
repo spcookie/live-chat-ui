@@ -5,8 +5,10 @@ import {message as _message} from "ant-design-vue";
 
 let chat: WebSocket | null = null
 
+const socketUrl = import.meta.env.VITE_SOCKET_URL
+
 const connectSocket = () => {
-    chat = new WebSocket('ws://localhost:8080/socket/chat', [
+    chat = new WebSocket(socketUrl, [
         window.sessionStorage.getItem('Token') as string
     ])
     chat.addEventListener('error', () => {

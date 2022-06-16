@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {h, reactive, ref} from "vue";
 import UserApi from "../apis/UserApi";
 import {User, useUserStore} from "../store/UserStore";
 import {useRouter} from "vue-router";
 import {connectSocket} from "../socket/ChatSocket";
-import {UserOutlined, KeyOutlined, LoadingOutlined} from "@ant-design/icons-vue";
+import {UserOutlined, KeyOutlined, LoadingOutlined, SmileOutlined} from "@ant-design/icons-vue";
 import {message} from "ant-design-vue";
+import {notification} from "ant-design-vue/es";
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -25,12 +26,14 @@ const finish = async () => {
       // 登录成功保存用户信息到store
       const userInfo = data.data.user
       const tokenInfo = data.data.token
+      const accountInfo = userInfo.account
       const user: User = {
         id: userInfo.id,
         username: userInfo.username,
-        name: userInfo.name,
-        age: userInfo.age,
-        phone: userInfo.phone,
+        name: accountInfo.name,
+        age: accountInfo.age,
+        sex: accountInfo.sex,
+        phone: accountInfo.phone,
         auth: userInfo.auth,
         token: tokenInfo
       }
@@ -41,6 +44,7 @@ const finish = async () => {
       await router.replace({
         name: 'MainFace'
       })
+      isMobile()
     } else {
       message.error('用户名或密码错误')
     }
@@ -49,12 +53,34 @@ const finish = async () => {
     isLogining.value = false
   }
 }
+// 检测是否是手机端
+const isMobile = () => {
+  let is = false
+  // 当前设备是移动设备
+  if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+    is = true
+  } else if (/Android|iPhone|iPad|iPod/i.test(navigator.platform)) {
+    is = true
+  } else if (typeof window.orientation !== 'undefined') {
+    is = true
+  } else if ('ontouchstart' in document.documentElement) {
+    is = true
+  }
+  if (is) {
+    notification.open({
+      message: '当前设备是移动设备',
+      description: '为了更好的体验, 请横屏使用',
+      icon: () => h(SmileOutlined, { style: 'color: #108ee9' }),
+    })
+  }
+}
 
 const isLogin = ref(true)
 // 注册
 const registerData = reactive({
   name: '',
   password: '',
+  confirmPassword: '',
   phone: '',
   sex: '',
   age: ''
@@ -78,6 +104,15 @@ const checkPassword = (_rule: any, value: string) => {
     return Promise.resolve()
   }
 }
+const checkConfirmPassword = (_rule: any, value: string) => {
+  if (value === '') {
+    return Promise.reject('请再次输入密码');
+  } else if (value != registerData.password) {
+    return Promise.reject('两次输入的密码不同');
+  } else {
+    return Promise.resolve()
+  }
+}
 const checkPhone = (_rule: any, value: string) => {
   if (value === '') {
     return Promise.reject('请输入电话号码');
@@ -90,11 +125,13 @@ const checkPhone = (_rule: any, value: string) => {
 const rules = {
   name: [{validator: checkName, trigger: 'blur'}],
   password: [{validator: checkPassword, trigger: 'blur'}],
-  phone: [{validator: checkPhone, trigger: 'blur'}]
+  phone: [{validator: checkPhone, trigger: 'blur'}],
+  confirmPassword: [{validator: checkConfirmPassword, trigger: 'blur'}]
 }
 // 开始注册账号
 const accountNumber = ref('')
 const registrationResultDisplay = ref(false)
+const isRegistration = ref(false)
 const registrationVerificationFinish = () => {
   const register = {
     password: registerData.password,
@@ -105,6 +142,7 @@ const registrationVerificationFinish = () => {
       sex: registerData.sex
     }
   }
+  isRegistration.value = true
   UserApi.register(register).then(resp => {
     const {data} = resp
     if (data.code === 200) {
@@ -115,6 +153,8 @@ const registrationVerificationFinish = () => {
     } else if (data.code === 500) {
       message.error(data.message)
     }
+  }).finally(() => {
+    isRegistration.value = false
   })
 }
 const toLogin = () => {
@@ -153,14 +193,14 @@ export default {
                   hideRequiredMark
                   scrollToFirstError
                   :model="model"
-                  name="basic"
+                  name="login"
                   :label-col="{ span: 6 }"
                   :wrapper-col="{ span: 16 }"
                   autocomplete="off"
                   @finish="finish"
               >
                 <a-form-item
-                    label="用户名"
+                    label="账号"
                     name="username"
                     :rules="[{ required: true, message: '请输入用户名' }]"
                 >
@@ -181,14 +221,20 @@ export default {
                     </template>
                   </a-input-password>
                 </a-form-item>
-                <a-form-item :wrapperCol="{offset:6, span:16}">
-                  <a-button style="width: 60%;" type="primary" html-type="submit">
-                    <template v-if="isLogining" #icon>
-                      <loading-outlined/>
-                    </template>
-                    <span>登录</span>
-                  </a-button>
-                  <a-button @click="isLogin = false" style="width: 40%;" type="dashed">注册</a-button>
+                <a-form-item :wrapper-col="{span: 24}">
+                  <a-row justify="center" :gutter="6">
+                    <a-col :span="12">
+                      <a-button style="width: 100%;" type="primary" html-type="submit">
+                        <template v-if="isLogining" #icon>
+                          <loading-outlined/>
+                        </template>
+                        <span>登录</span>
+                      </a-button>
+                    </a-col>
+                    <a-col :span="6">
+                      <a-button style="width: 100%;" @click="isLogin = false"  type="dashed">注册</a-button>
+                    </a-col>
+                  </a-row>
                 </a-form-item>
               </a-form>
             </template>
@@ -197,32 +243,41 @@ export default {
         <a-card v-else>
           <a-form
               :model="registerData"
-              name="normal_login"
-              class="login-form"
+              name="register"
               @finish="registrationVerificationFinish"
               :rules="rules"
               hideRequiredMark
+              :label-col="{ span: 6 }"
+              :wrapper-col="{ span: 18 }"
+              autocomplete="off"
           >
             <a-form-item
                 has-feedback
                 label="昵称"
                 name="name"
             >
-              <a-input v-model:value="registerData.name" autocomplete="off"></a-input>
+              <a-input v-model:value="registerData.name"></a-input>
             </a-form-item>
             <a-form-item
                 has-feedback
                 label="密码"
                 name="password"
             >
-              <a-input-password v-model:value="registerData.password" autocomplete="off"></a-input-password>
+              <a-input-password v-model:value="registerData.password"></a-input-password>
+            </a-form-item>
+            <a-form-item
+                has-feedback
+                label="确认密码"
+                name="confirmPassword"
+            >
+              <a-input-password v-model:value="registerData.confirmPassword"></a-input-password>
             </a-form-item>
             <a-form-item
                 has-feedback
                 label="电话"
                 name="phone"
             >
-              <a-input type="number" v-model:value="registerData.phone" autocomplete="off"></a-input>
+              <a-input type="number" v-model:value="registerData.phone"></a-input>
             </a-form-item>
             <a-form-item
                 label="性别"
@@ -241,10 +296,15 @@ export default {
             >
               <a-date-picker v-model:value="registerData.age" />
             </a-form-item>
-            <a-form-item>
-              <a-row>
+            <a-form-item :wrapper-col="{span: 24}">
+              <a-row justify="center" :gutter="6">
                 <a-col :span="12">
-                  <a-button html-type="submit" style="width: 100%;" type="dashed">注册</a-button>
+                  <a-button html-type="submit" style="width: 100%;" type="dashed">
+                    <template v-if="isRegistration" #icon>
+                      <loading-outlined/>
+                    </template>
+                    <span>注册</span>
+                  </a-button>
                 </a-col>
                 <a-col :span="12">
                   <a-button @click="isLogin = true" style="width: 100%;" type="dashed">返回</a-button>
@@ -262,9 +322,9 @@ export default {
       >
         <template #subTitle>
           <span>
-            您的账号是:
+            您的账号是
           </span>
-          <a-typography-text strong>{{ accountNumber }}</a-typography-text>
+          <span style="font-weight: 800;font-size: x-large;color: #52c41a">{{ accountNumber }}</span>
           <span>
             请妥善保管
           </span>
@@ -281,7 +341,7 @@ export default {
 .login-container {
   display: flex;
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f5f5f5;
 
   .form-mask {

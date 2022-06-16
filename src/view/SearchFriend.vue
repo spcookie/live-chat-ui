@@ -9,22 +9,26 @@ import {message} from "ant-design-vue";
 
 // 查找好友
 const accountId = ref('')
-const accounts = ref<Account[]>([])
+const accounts = ref<Account[] | []>([])
+const initLoading = ref(false)
 const search = () => {
   // 校验
   const pattern = /[0-9]+/g
   if (pattern.test(accountId.value)) {
-    const account: Account = {
+    const account: Account  = {
       username: accountId.value,
       name: '',
       phone: '',
       age: ''
     }
+    initLoading.value = true
     FriendApi.searchFriend(account).then(resp => {
       const data = resp.data
       if (data.code === 200) {
-        accounts.value = data.data
+        accounts.value = data.data ?? []
       }
+    }).finally(() => {
+      initLoading.value = false
     })
   }
 }
@@ -56,7 +60,12 @@ export default {
           @search="search"
       />
     </template>
-    <template #renderItem="{ item }">
+    <a-list-item v-if="initLoading">
+      <div style="display: flex;justify-content: center;width: 100%">
+        <a-spin />
+      </div>
+    </a-list-item>
+    <template v-if="!initLoading" #renderItem="{ item }">
       <a-list-item>
         <a-list-item-meta>
           <template #description>
@@ -91,5 +100,9 @@ export default {
 .align-both-ends {
   display: flex;
   justify-content: space-between;
+}
+:deep(.ant-list-items) {
+  height: calc(100vh - 197.54px);
+  overflow: auto;
 }
 </style>
