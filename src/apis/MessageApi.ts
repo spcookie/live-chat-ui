@@ -33,6 +33,14 @@ export type ImageMessage = {
     imageBase64: string
 }
 
+export type messageQueryPage = {
+    id: number | undefined
+    page: number,
+    size: number,
+    type: MessageType | null,
+    example: string,
+}
+
 export default class MessageApi {
 
     static loadFriendMessageById(id: string, page: number, size: number) {
@@ -49,5 +57,9 @@ export default class MessageApi {
 
     static sendImgMessage(imageBase64: ImageMessage) {
         return BaseService.put('/message/send/image', imageBase64)
+    }
+
+    static queryMessagesWithType(queryMessage: messageQueryPage) {
+        return BaseService.post('/message/friend/history', queryMessage)
     }
 }

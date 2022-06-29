@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {ref, watch, nextTick, onUnmounted, h, reactive} from "vue";
+import {ref, watch, nextTick, onUnmounted, reactive} from "vue";
 import {UserOutlined, PictureOutlined, PicLeftOutlined, DeleteOutlined, FolderOutlined} from "@ant-design/icons-vue";
-import MessageApi, {ChatMessage} from "../apis/MessageApi";
+import MessageApi, {ChatMessage, messageQueryPage} from "../apis/MessageApi";
 import FileApi from "../apis/FileApi";
 import {useRoute} from "vue-router";
 import Bubble from "../components/Bubble.vue";
@@ -229,25 +229,43 @@ const disableScrolling = ref({
   overflow: 'auto',
 })
 const historyMessage = ref<ChatMessage[]>([])
-const historyMessageQuery = reactive({
+const historyMessageQuery = reactive<messageQueryPage>({
+  id: undefined,
   page: 0,
-  size: 1
+  size: 1,
+  type: null,
+  example: '',
 })
 const queryLoading = ref(false)
-const q = (page: number, size: number) => {
-  if (Number.isInteger(page) && Number.isInteger(size)) {
-    if (page >= 0 && size > 0) {
+const q = (messageQuery: messageQueryPage) => {
+  if (Number.isInteger(messageQuery.page) && Number.isInteger(messageQuery.size)) {
+    if (messageQuery.page >= 0 && messageQuery.size > 0) {
       queryLoading.value = true
-      MessageApi.loadFriendMessageById(props.id, page, size).then(resp => {
-        if (resp.data.code === 200) {
-          //加载消息数据
-          historyMessage.value = resp.data.data.reverse() as ChatMessage[]
-        } else if (resp.data.code === 405) {
-          message.warn(resp.data.data)
-        }
-      }).finally(() => {
-        queryLoading.value = false
-      })
+      if (messageQuery.type == null) {
+        // 按分页条件查询所有消息
+        MessageApi.loadFriendMessageById(props.id, messageQuery.page, messageQuery.size).then(resp => {
+          if (resp.data.code === 200) {
+            //加载消息数据
+            historyMessage.value = resp.data.data.reverse() as ChatMessage[]
+          } else if (resp.data.code === 405) {
+            message.warn(resp.data.data)
+          }
+        }).finally(() => {
+          queryLoading.value = false
+        })
+      } else {
+        messageQuery.id = props.id
+        MessageApi.queryMessagesWithType(messageQuery).then(resp => {
+          if (resp.data.code === 200) {
+            //加载消息数据
+            historyMessage.value = resp.data.data.reverse() as ChatMessage[]
+          } else if (resp.data.code === 500) {
+            message.error(resp.data.message)
+          }
+        }).finally(() => {
+          queryLoading.value = false
+        })
+      }
     } else {
       message.warn('请输入合法的查询值')
     }
@@ -256,14 +274,14 @@ const q = (page: number, size: number) => {
 watch(
     () => historyMessageQuery,
     () => {
-      q(historyMessageQuery.page, historyMessageQuery.size)
+      q(historyMessageQuery)
     },
     {deep: true}
 )
 const openHistoryMessage = () => {
   isOpenHistoryMessage.value = true
   disableScrolling.value.overflow = 'hidden'
-  q(historyMessageQuery.page, historyMessageQuery.size)
+  q(historyMessageQuery)
 }
 const onCloseHistoryMessage = () => {
   isOpenHistoryMessage.value = false
@@ -316,12 +334,23 @@ export default {
           </template>
           <template #footer>
             <a-input-group size="large">
-              <a-row :gutter="8">
-                <a-col :span="8">
+              <a-row :gutter="4">
+                <a-col :span="4">
                     <a-input addon-before="页数" v-model:value.number="historyMessageQuery.page" />
                 </a-col>
-                <a-col :span="8">
+                <a-col :span="4">
                     <a-input addon-before="条数" v-model:value.number="historyMessageQuery.size" />
+                </a-col>
+                <a-col :span="9">
+                  <a-radio-group size="large" v-model:value="historyMessageQuery.type" button-style="solid">
+                    <a-radio-button :value="null">全部</a-radio-button>
+                    <a-radio-button value="TEXT">文字</a-radio-button>
+                    <a-radio-button value="IMAGE">图片</a-radio-button>
+                    <a-radio-button value="FILE">文件</a-radio-button>
+                  </a-radio-group>
+                </a-col>
+                <a-col :span="7" v-show="historyMessageQuery.type === 'TEXT'">
+                    <a-input addon-before="关键字" v-model:value="historyMessageQuery.example" />
                 </a-col>
               </a-row>
             </a-input-group>
